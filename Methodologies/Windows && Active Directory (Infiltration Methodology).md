@@ -97,14 +97,15 @@ The easiest way to determine if a target possesses Active Directory is by checki
 ```bash
 389/tcp  open  ldap              Microsoft Windows Active Directory LDAP (Domain: machine.htb, Site: Default-First-Site-Name)
 ```
-######  user query  /  query all objects
+---
+####  user query  /  query all objects via LDAP
 ```bash
 nxc ldap <ip>/<FQDN> --users / --users-export <file>
 nxc ldap machineDC.machine.vl -u '' -p '' --query "(sAMAccountName=*)" ""
 nxc ldap machineDC.machine.vl -u '' -p '' --query "(objectClass=*)" "" | grep "Response for object:"
 ```
-######  DNs grepping
-
+---
+####  DNs grepping
 **`Distinguished names (DNs)`** - the unique identifier of an object and its exact location within LDAP and Active Directory, made up of the following components:
 
 | Prefix | Meaning                                                                                                                                       | Example               |
@@ -125,8 +126,34 @@ ldapsearch -x   # use simple authentication
 ```bash
 ldapsearch -x -b "dc=...,dc=..." "*" -H ldap://machineDC.machine.vl | awk -F ': ' '/^dn:/{print $2}' | cut -d "=" -f2  | tail -11 | cut -d "," -f1 | tr " " "."
 ```
+---
+#### RID Bruteforcing
+**`RID Bruteforcing`** - enumeration technique for identifying current users  directly interacting with the Domain Controller. **`RID (Relative Identifier)`** is the last set of numbers in **`SID (Security Identifier)`*, assigned by-default for every account. That characters symbolise role of the user in the Active Directory.  
+  
+**Bruteforcing is becomes available if:**  
+Domain controller have **enabled anonymous or guest session/account,** or  attacker has a valid account (even with the lowest possible privileges)
 
-###### File Share Enumeration
+#### **`RID HIERARCHY`**
+Reserved and Built-in (0-999)
+- **500**: Built-in Administrator account with full system control.
+- **501**: Built-in Guest account for temporary or limited access.
+- **502**: Krbtgt account, used by the Key Distribution Center for Kerberos.
+- **503–543**: Reserved for system functions, domain controllers, and special services.
+- **544–560**: Built-in local groups like Administrators (544), Users (545), and Guests
+
+Dynamic User and Group RIDs (1000 and Up)
+	Each newly created local user or domain object takes the next consecutive integer (e.g., 1001, 1002, 1105).
+
+##### Impacket RID bruteforcing
+```bash
+lookupsid.py 'host/guest:<password>'@<adress or targetname> -no-pass | grep 'SidTypeUser'
+```
+#### NetExec RID bruteforcing
+```bash
+nxc smb <ip/fqdn> -u <user> -p <password> --rid-brute 
+```
+---
+#### File Share Enumeration
 **`SMB`** - take a look on the file share using `guest credentials`
 ```bash
 135/tcp   open  msrpc         Microsoft Windows RPC
@@ -147,7 +174,8 @@ Host script results:
 smbclient -NL <ip>                    # list shares
 smbclient //<ip>/<share> -U guest%    # use guest credentials
 ```
-###### Server Enumeration
+---
+#### Server Enumeration
 Also it is worth to check **`machine procedure call`** records
 ```bash
 rpcclient -U "%" <target>   # using anonymous access
