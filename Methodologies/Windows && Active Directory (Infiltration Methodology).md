@@ -90,6 +90,45 @@ The easiest way to determine if a target possesses Active Directory is by checki
 * **SMB** (`445` TCP) – Server Message Block used for network file sharing and IPC.
 * **LDAP Global Catalog** (`3268` / `3269` TCP) – Global Catalog queries (`3268` unencrypted / `3269` encrypted).
 
+
+#### File Share Enumeration
+**`SMB`** - take a look on the file share using `guest credentials`
+```bash
+135/tcp   open  msrpc         Microsoft Windows RPC
+139/tcp   open  netbios-ssn   Microsoft Windows netbios-ssn
+445/tcp   open  microsoft-ds?
+
+Host script results:
+|_clock-skew: mean: 7h59m59s, deviation: 0s, median: 7h59m58s
+| smb2-security-mode: 
+|   3.1.1: 
+|_    Message signing enabled and required
+| smb2-time: 
+|   date: 2026-07-31T15:24:46
+|_  start_date: N/A
+```
+
+```bash
+smbclient -NL <ip>                    # list shares
+smbclient //<ip>/<share> -U guest%    # use guest credentials
+```
+---
+
+#### Server Enumeration
+Also it is worth to check **`machine procedure call`** records
+```bash
+rpcclient -U "%" <target>   # using anonymous access
+```
+``` bash
+srvinfo                      # server information
+enumdomains                  # enumerate ALL domains deployed in the network
+enumdomusers                 # enumerate all users
+querydominfo                 # server, user, domain info deployed on the target
+queryuser <RID>              # displays all information about selected user
+querygroup                   # all info about selected group
+netsharegetinfo <share>      # info about specific share
+```
+
 **`Lightweight Directory Access Protocol (LDAP)`** — a protocol that provides access to Active Directory's centralized database, allowing queries and modifications against objects such as: usernames, groups, distinguished names (DNs), computers, organizational units (OUs), permissions, group policies, and their attributes.
 
 **`Offensive Vector:`** Since LDAP is often queryable, we can attempt an anonymous bind — authenticating without any credentials (empty username and password fields) — to see if the directory permits unauthenticated access. If successful, we can expose valuable information about the Active Directory structure, which could be exfiltrated and used for further attacks. **THIS SERVICE IS A PRIMARY ENUMERATION TARGET!**
@@ -152,44 +191,6 @@ lookupsid.py 'host/guest:<password>'@<adress or targetname> -no-pass | grep 'Sid
 ```bash
 nxc smb <ip/fqdn> -u <user> -p <password> --rid-brute 
 ```
----
-#### File Share Enumeration
-**`SMB`** - take a look on the file share using `guest credentials`
-```bash
-135/tcp   open  msrpc         Microsoft Windows RPC
-139/tcp   open  netbios-ssn   Microsoft Windows netbios-ssn
-445/tcp   open  microsoft-ds?
-
-Host script results:
-|_clock-skew: mean: 7h59m59s, deviation: 0s, median: 7h59m58s
-| smb2-security-mode: 
-|   3.1.1: 
-|_    Message signing enabled and required
-| smb2-time: 
-|   date: 2026-07-31T15:24:46
-|_  start_date: N/A
-```
-
-```bash
-smbclient -NL <ip>                    # list shares
-smbclient //<ip>/<share> -U guest%    # use guest credentials
-```
----
-#### Server Enumeration
-Also it is worth to check **`machine procedure call`** records
-```bash
-rpcclient -U "%" <target>   # using anonymous access
-```
-``` bash
-srvinfo                      # server information
-enumdomains                  # enumerate ALL domains deployed in the network
-enumdomusers                 # enumerate all users
-querydominfo                 # server, user, domain info deployed on the target
-queryuser <RID>              # displays all information about selected user
-querygroup                   # all info about selected group
-netsharegetinfo <share>      # info about specific share
-```
-
 ---
 
 # Footprint
